@@ -6,12 +6,25 @@ import { pool } from '../src/db.js';
 
 export const app = createApp();
 
+// Safety check: the tests delete data, so they only run against a database named *_test.
+async function assertTestDatabase() {
+  const { rows } = await pool.query('SELECT current_database() AS name');
+  if (!rows[0].name.endsWith('_test')) {
+    throw new Error(
+      `Refusing to run tests on database "${rows[0].name}". ` +
+        'TEST_DATABASE_URL must point to a separate database whose name ends in _test.',
+    );
+  }
+}
+
 export async function setupDatabase() {
+  await assertTestDatabase();
   const schema = await fs.readFile(new URL('../db/schema.sql', import.meta.url), 'utf8');
   await pool.query(schema);
 }
 
 export async function resetData() {
+  await assertTestDatabase();
   await pool.query('TRUNCATE users RESTART IDENTITY CASCADE');
 }
 

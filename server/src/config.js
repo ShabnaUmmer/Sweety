@@ -18,6 +18,10 @@ try {
   throw new Error(`APP_TIMEZONE is not a valid IANA time zone: ${timezone}`);
 }
 
+if (isTest && process.env.TEST_DATABASE_URL === process.env.DATABASE_URL) {
+  throw new Error('TEST_DATABASE_URL must be different from DATABASE_URL: tests delete data.');
+}
+
 const jwtSecret = requireEnv('JWT_SECRET');
 if (isProduction && jwtSecret.length < 32) {
   throw new Error('JWT_SECRET must be at least 32 characters in production.');
