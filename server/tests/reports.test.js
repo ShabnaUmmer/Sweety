@@ -18,18 +18,14 @@ after(closeDatabase);
 
 async function seedReadings(token) {
   const readings = [
-    // Previous month (September): included in the monthly report
     ['2026-09-01', 'morning_fasting', 95],
     ['2026-09-15', 'after_lunch', 100],
     ['2026-09-30', 'after_dinner', 105],
-    // Just outside September
     ['2026-08-31', 'morning_fasting', 300],
-    // Month to date (October up to the 15th)
     ['2026-10-01', 'morning_fasting', 90],
     ['2026-10-10', 'after_lunch', 111],
     ['2026-10-15', 'morning_fasting', 100],
     ['2026-10-15', 'after_dinner', 140],
-    // After the selected date: must not appear in month-to-date
     ['2026-10-16', 'morning_fasting', 500],
     ['2026-10-31', 'morning_fasting', 450],
   ];
