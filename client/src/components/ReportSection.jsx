@@ -10,8 +10,13 @@ export default function ReportSection({ title, report, addDate, children }) {
 
       {report.count === 0 ? (
         <p>
-          No readings recorded for this period.{' '}
-          <Link to={`/?date=${addDate}`}>Add a reading</Link>
+          No readings recorded for this period.
+          {addDate && (
+            <>
+              {' '}
+              <Link to={`/?date=${addDate}`}>Add a reading</Link>
+            </>
+          )}
         </p>
       ) : (
         <dl className="stats">

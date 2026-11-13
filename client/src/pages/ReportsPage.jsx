@@ -4,8 +4,10 @@ import Field from '../components/Field.jsx';
 import ReportSection from '../components/ReportSection.jsx';
 import { useMeta } from '../meta.jsx';
 
-export default function ReportsPage() {
+// Shows the logged-in patient's reports. A doctor passes `patient` to see that patient's reports.
+export default function ReportsPage({ patient }) {
   const { slots, today } = useMeta();
+  const reportsPath = patient ? `/doctor/patients/${patient.id}/reports` : '/reports';
 
   const [date, setDate] = useState(today);
   const [reports, setReports] = useState(null);
@@ -17,9 +19,9 @@ export default function ReportsPage() {
     let ignore = false;
     setStatus('loading');
     Promise.all([
-      api.get(`/reports/daily?date=${date}`),
-      api.get(`/reports/month-to-date?date=${date}`),
-      api.get(`/reports/monthly?date=${date}`),
+      api.get(`${reportsPath}/daily?date=${date}`),
+      api.get(`${reportsPath}/month-to-date?date=${date}`),
+      api.get(`${reportsPath}/monthly?date=${date}`),
     ])
       .then(([daily, monthToDate, monthly]) => {
         if (ignore) return;
@@ -34,7 +36,7 @@ export default function ReportsPage() {
     return () => {
       ignore = true;
     };
-  }, [date, attempt]);
+  }, [date, attempt, reportsPath]);
 
   function slotLabel(slotValue) {
     return slots.find((slot) => slot.value === slotValue)?.label ?? slotValue;
@@ -42,7 +44,7 @@ export default function ReportsPage() {
 
   return (
     <>
-      <h1>Reports</h1>
+      <h1>{patient ? `Reports for ${patient.name}` : 'Reports'}</h1>
 
       <div className="toolbar">
         <Field
@@ -67,7 +69,7 @@ export default function ReportsPage() {
 
       {status === 'ready' && (
         <>
-          <ReportSection title="Daily report" report={reports.daily} addDate={date}>
+          <ReportSection title="Daily report" report={reports.daily} addDate={patient ? undefined : date}>
             {reports.daily.readings.length > 0 && (
               <table className="reading-table">
                 <caption className="visually-hidden">Readings on the selected date</caption>
@@ -89,9 +91,9 @@ export default function ReportsPage() {
             )}
           </ReportSection>
 
-          <ReportSection title="Month-to-date report" report={reports.monthToDate} addDate={date} />
+          <ReportSection title="Month-to-date report" report={reports.monthToDate} addDate={patient ? undefined : date} />
 
-          <ReportSection title="Monthly report (previous month)" report={reports.monthly} addDate={today} />
+          <ReportSection title="Monthly report (previous month)" report={reports.monthly} addDate={patient ? undefined : today} />
         </>
       )}
     </>

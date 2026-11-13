@@ -18,8 +18,14 @@ export default function Layout() {
         <div className="container header-inner">
           <span className="wordmark">Sweety</span>
           <nav aria-label="Main">
-            <NavLink to="/" end>Readings</NavLink>
-            <NavLink to="/reports">Reports</NavLink>
+            {user.role === 'doctor' ? (
+              <NavLink to="/" end>Patients</NavLink>
+            ) : (
+              <>
+                <NavLink to="/" end>Readings</NavLink>
+                <NavLink to="/reports">Reports</NavLink>
+              </>
+            )}
           </nav>
           <div className="account">
             <span>{user.name}</span>

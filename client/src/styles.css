@@ -183,3 +183,17 @@ a { color: var(--primary); }
   .account { width: 100%; }
   .site-header nav { order: 3; width: 100%; flex-basis: 100%; }
 }
+
+/* Doctor pages */
+.patient-list { list-style: none; margin: 0; padding: 0; border-bottom: 1px solid var(--line); }
+.patient-list li {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.25rem 1rem;
+  padding: 0.875rem 0;
+  border-top: 1px solid var(--line);
+}
+.patient-email { color: var(--muted); margin-left: 0.5rem; }
+.back-link { display: inline-block; margin-top: 1.25rem; }
