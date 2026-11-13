@@ -6,11 +6,8 @@ import { HttpError, fieldError, hasErrors, validationError } from '../errors.js'
 import { createUser, findUserByEmail } from '../queries/userQueries.js';
 import { validateLogin, validateRegistration } from '../validation/authValidation.js';
 
-// Low cost in tests keeps the suite fast; real deployments use 12.
+// A low cost keeps the tests fast; normal use is 12.
 const BCRYPT_COST = config.isTest ? 4 : 12;
-
-// Checked when the email is unknown so that case takes as long as a wrong password.
-const UNKNOWN_USER_HASH = bcrypt.hashSync('unknown-user-placeholder', BCRYPT_COST);
 
 function signToken(user) {
   return jwt.sign({ sub: String(user.id) }, config.jwtSecret, {
@@ -19,8 +16,9 @@ function signToken(user) {
   });
 }
 
-function publicUser({ id, name, email }) {
-  return { id, name, email };
+// Never include password_hash here.
+function publicUser({ id, name, email, role }) {
+  return { id, name, email, role };
 }
 
 export async function register(req, res) {
@@ -29,6 +27,7 @@ export async function register(req, res) {
 
   const passwordHash = await bcrypt.hash(values.password, BCRYPT_COST);
   try {
+    // Everyone who registers is a patient. Doctor accounts are created by the seed script.
     const user = await createUser({ name: values.name, email: values.email, passwordHash });
     res.status(201).json({ token: signToken(user), user: publicUser(user) });
   } catch (error) {
@@ -44,11 +43,8 @@ export async function login(req, res) {
   if (hasErrors(fields)) throw validationError(fields);
 
   const user = await findUserByEmail(values.email);
-  const passwordMatches = await bcrypt.compare(
-    values.password,
-    user ? user.password_hash : UNKNOWN_USER_HASH,
-  );
-  if (!user || !passwordMatches) {
+  const passwordMatches = user && (await bcrypt.compare(values.password, user.password_hash));
+  if (!passwordMatches) {
     throw new HttpError(401, 'Incorrect email or password.', { code: 'INVALID_CREDENTIALS' });
   }
 

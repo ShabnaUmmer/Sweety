@@ -16,11 +16,9 @@ import {
   validateReadingInput,
 } from '../validation/readingValidation.js';
 
-const POSTGRES_MAX_INTEGER = 2147483647;
-
 function parseReadingId(rawId) {
   const id = Number(rawId);
-  if (!Number.isInteger(id) || id < 1 || id > POSTGRES_MAX_INTEGER) {
+  if (!Number.isInteger(id)) {
     throw new HttpError(404, 'Reading not found.');
   }
   return id;
@@ -30,8 +28,8 @@ export function sortBySlot(readings) {
   return [...readings].sort((a, b) => slotOrder(a.slot) - slotOrder(b.slot));
 }
 
-// The UNIQUE (user_id, reading_date, slot) constraint is the single guard against duplicates,
-// including two requests arriving at the same moment. Once it fires we only pick the message.
+// The UNIQUE (user_id, reading_date, slot) constraint is what prevents duplicates, even when
+// two requests arrive together. When it fires, we only choose which message to show.
 async function conflictOnCreate(userId, { date, slot }) {
   const count = await countReadingsOnDate(userId, date);
   if (count >= MAX_READINGS_PER_DAY) {
@@ -40,13 +38,17 @@ async function conflictOnCreate(userId, { date, slot }) {
   return fieldError(409, 'slot', duplicateSlotMessage(slot));
 }
 
-export async function listReadings(req, res) {
-  const { date } = req.query;
+// Shared with the doctor endpoints, which pass the patient's id.
+export async function readingsForDate(userId, date) {
   if (!isValidDateString(date)) {
     throw fieldError(400, 'date', 'Enter a valid date.');
   }
-  const readings = await findReadingsByDate(req.user.id, date);
-  res.json({ date, readings: sortBySlot(readings) });
+  return sortBySlot(await findReadingsByDate(userId, date));
+}
+
+export async function listReadings(req, res) {
+  const readings = await readingsForDate(req.user.id, req.query.date);
+  res.json({ date: req.query.date, readings });
 }
 
 export async function createReading(req, res) {

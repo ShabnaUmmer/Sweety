@@ -11,20 +11,21 @@ import { findReadingsByDate } from '../queries/readingQueries.js';
 import { getSummary } from '../queries/reportQueries.js';
 import { sortBySlot } from './readingsController.js';
 
-const RANGE_BY_REPORT_TYPE = {
-  daily: dailyRange,
-  'month-to-date': monthToDateRange,
-  monthly: previousMonthRange,
-};
+function getRange(type, date) {
+  if (type === 'daily') return dailyRange(date);
+  if (type === 'month-to-date') return monthToDateRange(date);
+  if (type === 'monthly') return previousMonthRange(date);
+  return null;
+}
 
-export async function getReport(req, res) {
-  const { type } = req.params;
-  if (!Object.hasOwn(RANGE_BY_REPORT_TYPE, type)) {
+// Builds a report for one user. Doctors call this with a patient's id.
+export async function createReport(userId, type, dateParam) {
+  const today = todayInTimezone(config.timezone);
+  const date = dateParam ?? today;
+
+  if (!getRange(type, today)) {
     throw new HttpError(404, 'Unknown report type.');
   }
-
-  const today = todayInTimezone(config.timezone);
-  const date = req.query.date ?? today;
   if (!isValidDateString(date)) {
     throw fieldError(400, 'date', 'Enter a valid date.');
   }
@@ -32,12 +33,16 @@ export async function getReport(req, res) {
     throw fieldError(400, 'date', 'Date cannot be in the future.');
   }
 
-  const { from, to } = RANGE_BY_REPORT_TYPE[type](date);
-  const summary = await getSummary(req.user.id, from, to);
+  const { from, to } = getRange(type, date);
+  const summary = await getSummary(userId, from, to);
   const report = { type, date, from, to, ...summary };
 
   if (type === 'daily') {
-    report.readings = sortBySlot(await findReadingsByDate(req.user.id, date));
+    report.readings = sortBySlot(await findReadingsByDate(userId, date));
   }
-  res.json(report);
+  return report;
+}
+
+export async function getReport(req, res) {
+  res.json(await createReport(req.user.id, req.params.type, req.query.date));
 }

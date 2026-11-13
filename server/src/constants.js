@@ -13,8 +13,9 @@ export const GLUCOSE_MIN = 40;
 export const GLUCOSE_MAX = 600;
 
 export const PASSWORD_MIN_LENGTH = 8;
-// bcrypt ignores anything past 72 bytes, so longer passwords are rejected instead of silently cut.
-export const PASSWORD_MAX_BYTES = 72;
+
+export const ROLE_PATIENT = 'patient';
+export const ROLE_DOCTOR = 'doctor';
 
 export function slotLabel(slotValue) {
   const slot = SLOTS.find((item) => item.value === slotValue);

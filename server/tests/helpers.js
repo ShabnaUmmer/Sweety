@@ -46,6 +46,20 @@ export async function registerUser(overrides = {}) {
   return { token: response.body.token, user: response.body.user, credentials };
 }
 
+// Doctors cannot register through the API, so tests promote a registered user directly.
+export async function registerDoctor() {
+  const doctor = await registerUser({ name: 'Dr Test' });
+  await pool.query("UPDATE users SET role = 'doctor' WHERE id = $1", [doctor.user.id]);
+  return doctor;
+}
+
+export async function assignPatient(doctorId, patientId) {
+  await pool.query('INSERT INTO doctor_patients (doctor_id, patient_id) VALUES ($1, $2)', [
+    doctorId,
+    patientId,
+  ]);
+}
+
 export function authHeader(token) {
   return { Authorization: `Bearer ${token}` };
 }
