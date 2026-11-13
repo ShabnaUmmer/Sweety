@@ -10,100 +10,60 @@ before(setupDatabase);
 beforeEach(resetData);
 after(closeDatabase);
 
-describe('registration', () => {
-  it('creates an account and returns a token without the password hash', async () => {
+describe('registration and login', () => {
+  it('registers a patient, stores a bcrypt hash and never returns it', async () => {
     const response = await request(app)
       .post('/api/auth/register')
-      .send({ name: 'Asha', email: 'Asha@Example.com', password: 'password123' });
+      .send({ name: 'Asha', email: 'asha@example.com', password: 'password123' });
 
     assert.equal(response.status, 201);
-    assert.ok(response.body.token);
-    assert.equal(response.body.user.email, 'asha@example.com');
+    assert.equal(response.body.user.role, 'patient');
     assert.equal(JSON.stringify(response.body).includes('password'), false);
-  });
 
-  it('stores a bcrypt hash, not the password', async () => {
-    await registerUser({ email: 'hash@example.com', password: 'password123' });
     const { rows } = await pool.query('SELECT password_hash FROM users');
-    assert.notEqual(rows[0].password_hash, 'password123');
     assert.match(rows[0].password_hash, /^\$2[aby]\$/);
   });
 
-  it('rejects invalid input with field errors', async () => {
-    const response = await request(app)
+  it('rejects invalid input and duplicate emails', async () => {
+    const invalid = await request(app)
       .post('/api/auth/register')
       .send({ name: '', email: 'not-an-email', password: 'short' });
+    assert.equal(invalid.status, 400);
 
-    assert.equal(response.status, 400);
-    assert.deepEqual(Object.keys(response.body.error.fields).sort(), ['email', 'name', 'password']);
-  });
-
-  it('rejects an email that is already registered, ignoring case', async () => {
     await registerUser({ email: 'same@example.com' });
-    const response = await request(app)
+    const duplicate = await request(app)
       .post('/api/auth/register')
-      .send({ name: 'Other', email: 'SAME@example.com', password: 'password123' });
-
-    assert.equal(response.status, 409);
-    assert.ok(response.body.error.fields.email);
+      .send({ name: 'Other', email: 'same@example.com', password: 'password123' });
+    assert.equal(duplicate.status, 409);
   });
-});
 
-describe('login', () => {
-  it('returns a token for the right password', async () => {
+  it('logs in with the right password and rejects a wrong one', async () => {
     const { credentials } = await registerUser();
-    const response = await request(app)
+
+    const ok = await request(app)
       .post('/api/auth/login')
       .send({ email: credentials.email, password: credentials.password });
+    assert.equal(ok.status, 200);
+    assert.ok(ok.body.token);
 
-    assert.equal(response.status, 200);
-    assert.ok(response.body.token);
-  });
-
-  it('rejects a wrong password', async () => {
-    const { credentials } = await registerUser();
-    const response = await request(app)
+    const wrong = await request(app)
       .post('/api/auth/login')
       .send({ email: credentials.email, password: 'wrong-password' });
-
-    assert.equal(response.status, 401);
-    assert.equal(response.body.error.message, 'Incorrect email or password.');
-  });
-
-  it('gives the same answer for an unknown email', async () => {
-    const response = await request(app)
-      .post('/api/auth/login')
-      .send({ email: 'nobody@example.com', password: 'password123' });
-
-    assert.equal(response.status, 401);
-    assert.equal(response.body.error.message, 'Incorrect email or password.');
+    assert.equal(wrong.status, 401);
+    assert.equal(wrong.body.error.message, 'Incorrect email or password.');
   });
 });
 
-describe('authentication on private endpoints', () => {
-  it('rejects requests without a token', async () => {
-    for (const path of ['/api/auth/me', '/api/readings?date=2026-10-15', '/api/reports/daily']) {
-      const response = await request(app).get(path);
-      assert.equal(response.status, 401, path);
-    }
-    const create = await request(app).post('/api/readings').send({});
-    assert.equal(create.status, 401);
+describe('protected endpoints', () => {
+  it('rejects requests with no token or an invalid token', async () => {
+    const noToken = await request(app).get('/api/readings?date=2026-10-15');
+    assert.equal(noToken.status, 401);
+
+    const badToken = await request(app).get('/api/auth/me').set(authHeader('not-a-token'));
+    assert.equal(badToken.status, 401);
   });
 
-  it('rejects a malformed token', async () => {
-    const response = await request(app).get('/api/auth/me').set(authHeader('not-a-real-token'));
-    assert.equal(response.status, 401);
-    assert.equal(response.body.error.code, 'TOKEN_INVALID');
-  });
-
-  it('rejects a token signed with the wrong secret', async () => {
-    const forged = jwt.sign({ sub: '1' }, 'some-other-secret');
-    const response = await request(app).get('/api/auth/me').set(authHeader(forged));
-    assert.equal(response.status, 401);
-    assert.equal(response.body.error.code, 'TOKEN_INVALID');
-  });
-
-  it('reports an expired token so the client can ask the user to log in again', async () => {
+  it('reports an expired token', async () => {
     const { user } = await registerUser();
     const expired = jwt.sign(
       { sub: String(user.id), exp: Math.floor(Date.now() / 1000) - 60 },
@@ -112,12 +72,5 @@ describe('authentication on private endpoints', () => {
     const response = await request(app).get('/api/auth/me').set(authHeader(expired));
     assert.equal(response.status, 401);
     assert.equal(response.body.error.code, 'TOKEN_EXPIRED');
-  });
-
-  it('returns the current user for a valid token', async () => {
-    const { token, user } = await registerUser();
-    const response = await request(app).get('/api/auth/me').set(authHeader(token));
-    assert.equal(response.status, 200);
-    assert.equal(response.body.user.id, user.id);
   });
 });

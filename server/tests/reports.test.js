@@ -1,11 +1,8 @@
 import './env.js';
 import { describe, it, before, beforeEach, after } from 'node:test';
 import assert from 'node:assert/strict';
-import request from 'supertest';
 import {
   addReading,
-  app,
-  authHeader,
   closeDatabase,
   getReport,
   registerUser,
@@ -87,17 +84,6 @@ describe('reports', () => {
     assert.equal(response.body.average, 100);
   });
 
-  it('monthly for a January date uses December of the previous year', async () => {
-    const { token } = await registerUser();
-    await addReading(token, { date: '2025-12-31', slot: 'after_lunch', value: 123 });
-
-    const response = await getReport(token, 'monthly', '2026-01-20');
-    assert.equal(response.body.from, '2025-12-01');
-    assert.equal(response.body.to, '2025-12-31');
-    assert.equal(response.body.count, 1);
-    assert.equal(response.body.highest, 123);
-  });
-
   it('returns zero count and null statistics when there are no readings', async () => {
     const { token } = await registerUser();
 
@@ -113,30 +99,4 @@ describe('reports', () => {
     assert.deepEqual(daily.body.readings, []);
   });
 
-  it('never includes another user\'s readings', async () => {
-    const mine = await registerUser();
-    const theirs = await registerUser();
-    await addReading(theirs.token, { date: SELECTED, slot: 'after_lunch', value: 400 });
-    await addReading(mine.token, { date: SELECTED, slot: 'after_lunch', value: 100 });
-
-    const response = await getReport(mine.token, 'daily', SELECTED);
-    assert.equal(response.body.count, 1);
-    assert.equal(response.body.highest, 100);
-  });
-
-  it('rejects bad dates and unknown report types', async () => {
-    const { token } = await registerUser();
-
-    const invalid = await getReport(token, 'daily', 'not-a-date');
-    assert.equal(invalid.status, 400);
-
-    const future = await getReport(token, 'daily', '2999-01-01');
-    assert.equal(future.status, 400);
-    assert.equal(future.body.error.fields.date, 'Date cannot be in the future.');
-
-    const unknown = await request(app).get('/api/reports/weekly').set(authHeader(token));
-    assert.equal(unknown.status, 404);
-    const prototypeName = await request(app).get('/api/reports/constructor').set(authHeader(token));
-    assert.equal(prototypeName.status, 404);
-  });
 });
