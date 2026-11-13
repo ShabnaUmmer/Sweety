@@ -2,7 +2,6 @@ import { findAssignedPatients } from '../queries/doctorQueries.js';
 import { readingsForDate } from './readingsController.js';
 import { createReport } from './reportsController.js';
 
-// These handlers are read-only. req.patient is set by requireAssignedPatient.
 
 export async function listPatients(req, res) {
   res.json({ patients: await findAssignedPatients(req.user.id) });

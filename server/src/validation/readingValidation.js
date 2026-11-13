@@ -48,7 +48,6 @@ function checkSlot(slot) {
   return { slot };
 }
 
-// `today` is a 'YYYY-MM-DD' string in the app's time zone.
 export function validateReadingInput(body, today) {
   const input = body ?? {};
   const fields = {};

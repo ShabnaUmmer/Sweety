@@ -10,7 +10,6 @@ describe('date helpers', () => {
   });
 
   it('works out "today" in the configured time zone', () => {
-    // 20:00 UTC on 14 Oct is already 15 Oct in India.
     const now = new Date('2026-10-14T20:00:00Z');
     assert.equal(todayInTimezone('Asia/Kolkata', now), '2026-10-15');
     assert.equal(todayInTimezone('UTC', now), '2026-10-14');

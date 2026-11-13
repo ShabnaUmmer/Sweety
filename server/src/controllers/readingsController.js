@@ -28,8 +28,6 @@ export function sortBySlot(readings) {
   return [...readings].sort((a, b) => slotOrder(a.slot) - slotOrder(b.slot));
 }
 
-// The UNIQUE (user_id, reading_date, slot) constraint is what prevents duplicates, even when
-// two requests arrive together. When it fires, we only choose which message to show.
 async function conflictOnCreate(userId, { date, slot }) {
   const count = await countReadingsOnDate(userId, date);
   if (count >= MAX_READINGS_PER_DAY) {
@@ -38,7 +36,6 @@ async function conflictOnCreate(userId, { date, slot }) {
   return fieldError(409, 'slot', duplicateSlotMessage(slot));
 }
 
-// Shared with the doctor endpoints, which pass the patient's id.
 export async function readingsForDate(userId, date) {
   if (!isValidDateString(date)) {
     throw fieldError(400, 'date', 'Enter a valid date.');

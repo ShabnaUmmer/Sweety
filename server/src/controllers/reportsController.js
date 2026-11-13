@@ -18,7 +18,6 @@ function getRange(type, date) {
   return null;
 }
 
-// Builds a report for one user. Doctors call this with a patient's id.
 export async function createReport(userId, type, dateParam) {
   const today = todayInTimezone(config.timezone);
   const date = dateParam ?? today;

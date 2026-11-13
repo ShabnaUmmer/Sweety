@@ -6,7 +6,6 @@ import { HttpError, fieldError, hasErrors, validationError } from '../errors.js'
 import { createUser, findUserByEmail } from '../queries/userQueries.js';
 import { validateLogin, validateRegistration } from '../validation/authValidation.js';
 
-// A low cost keeps the tests fast; normal use is 12.
 const BCRYPT_COST = config.isTest ? 4 : 12;
 
 function signToken(user) {
@@ -16,7 +15,6 @@ function signToken(user) {
   });
 }
 
-// Never include password_hash here.
 function publicUser({ id, name, email, role }) {
   return { id, name, email, role };
 }
@@ -27,7 +25,6 @@ export async function register(req, res) {
 
   const passwordHash = await bcrypt.hash(values.password, BCRYPT_COST);
   try {
-    // Everyone who registers is a patient. Doctor accounts are created by the seed script.
     const user = await createUser({ name: values.name, email: values.email, passwordHash });
     res.status(201).json({ token: signToken(user), user: publicUser(user) });
   } catch (error) {

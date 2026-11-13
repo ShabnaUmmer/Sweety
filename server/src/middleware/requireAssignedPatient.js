@@ -1,7 +1,6 @@
 import { HttpError } from '../errors.js';
 import { findAssignedPatient } from '../queries/doctorQueries.js';
 
-// For /patients/:patientId routes. The doctor must be assigned to that patient in the database.
 export async function requireAssignedPatient(req, res, next) {
   const patientId = Number(req.params.patientId);
   const patient = Number.isInteger(patientId)

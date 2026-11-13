@@ -5,7 +5,7 @@ import { api } from '../api.js';
 // Doctor's home page: the patients assigned to this doctor.
 export default function PatientsPage() {
   const [patients, setPatients] = useState([]);
-  const [status, setStatus] = useState('loading'); // 'loading' | 'ready' | 'error'
+  const [status, setStatus] = useState('loading'); 
   const [errorMessage, setErrorMessage] = useState('');
   const [attempt, setAttempt] = useState(0);
 

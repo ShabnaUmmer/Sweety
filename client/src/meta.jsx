@@ -3,7 +3,6 @@ import { api } from './api.js';
 
 const MetaContext = createContext(null);
 
-// Loads the server's slot list, limits and "today" once, before anything else is shown.
 export function MetaProvider({ children }) {
   const [meta, setMeta] = useState(null);
   const [error, setError] = useState('');

@@ -5,7 +5,6 @@ const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
-  // 'loading' while a saved token is being checked, then 'authenticated' or 'anonymous'.
   const [status, setStatus] = useState(tokenStore.get() ? 'loading' : 'anonymous');
   // Shown on the login page, e.g. "Your session has expired."
   const [notice, setNotice] = useState('');

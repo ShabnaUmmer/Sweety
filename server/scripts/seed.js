@@ -4,16 +4,15 @@ import { SLOTS } from '../src/constants.js';
 import { shiftDate, todayInTimezone } from '../src/dates.js';
 import { pool } from '../src/db.js';
 
-const PASSWORD = 'demo-pass-123';
-const DAYS_OF_HISTORY = 45; // the current month plus all of the previous month
+const PASSWORD = 'Sweety@123';
+const DAYS_OF_HISTORY = 45; 
 const DEMO_EMAILS = [
-  'demo@sweety.test',
+  'patient1@sweety.test',
   'patient2@sweety.test',
   'patient3@sweety.test',
   'doctor@sweety.test',
 ];
 
-// Made-up sample values for demonstration only. They are not real medical data.
 const SAMPLE_DAYS = [
   [104, 142, 128, 135],
   [98, 151, 119, 132],
@@ -25,8 +24,8 @@ const SAMPLE_DAYS = [
 ];
 
 function readingsForDay(dayIndex, offset) {
-  if (dayIndex === 0) return [SAMPLE_DAYS[offset][0]]; // today: only the morning reading so far
-  const count = dayIndex % 4 === 3 ? 2 : SLOTS.length; // some days have only two readings
+  if (dayIndex === 0) return [SAMPLE_DAYS[offset][0]]; 
+  const count = dayIndex % 4 === 3 ? 2 : SLOTS.length; 
   return SAMPLE_DAYS[(dayIndex + offset) % SAMPLE_DAYS.length].slice(0, count);
 }
 
@@ -57,16 +56,15 @@ async function addReadings(client, userId, today, offset) {
 const client = await pool.connect();
 try {
   await client.query('BEGIN');
-  // Running the seed again replaces the demo accounts (their readings and assignments go with them).
   await client.query('DELETE FROM users WHERE email = ANY($1)', [DEMO_EMAILS]);
 
   const passwordHash = await bcrypt.hash(PASSWORD, 12);
   const today = todayInTimezone(config.timezone);
 
-  const doctorId = await createUser(client, 'Dr. Demo', 'doctor@sweety.test', 'doctor', passwordHash);
-  const patientId = await createUser(client, 'Demo User', 'demo@sweety.test', 'patient', passwordHash);
-  const secondId = await createUser(client, 'Second Patient', 'patient2@sweety.test', 'patient', passwordHash);
-  const thirdId = await createUser(client, 'Unassigned Patient', 'patient3@sweety.test', 'patient', passwordHash);
+  const doctorId = await createUser(client, 'Dr. John', 'doctor@sweety.test', 'doctor', passwordHash);
+  const patientId = await createUser(client, 'Patient 1', 'patient1@sweety.test', 'patient', passwordHash);
+  const secondId = await createUser(client, 'Patient 2', 'patient2@sweety.test', 'patient', passwordHash);
+  const thirdId = await createUser(client, 'Patient 3', 'patient3@sweety.test', 'patient', passwordHash);
 
   let readingCount = 0;
   readingCount += await addReadings(client, patientId, today, 0);
@@ -81,8 +79,7 @@ try {
 
   await client.query('COMMIT');
   console.log(`Seeded ${readingCount} sample readings.`);
-  console.log(`Patient login: demo@sweety.test / ${PASSWORD}`);
-  console.log(`Doctor login:  doctor@sweety.test / ${PASSWORD} (assigned: Demo User, Second Patient)`);
+  console.log(`Doctor login:  doctor@sweety.test / ${PASSWORD} (assigned: Patient 1, Patient 2)`);
 } catch (error) {
   await client.query('ROLLBACK');
   throw error;

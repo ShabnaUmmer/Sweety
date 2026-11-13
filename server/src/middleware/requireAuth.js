@@ -7,7 +7,6 @@ function authError(message, code) {
   return new HttpError(401, message, { code });
 }
 
-// Identity always comes from the verified token, never from anything the client sends in the body or URL.
 export async function requireAuth(req, res, next) {
   const [scheme, token] = (req.get('Authorization') ?? '').split(' ');
   if (scheme !== 'Bearer' || !token) {

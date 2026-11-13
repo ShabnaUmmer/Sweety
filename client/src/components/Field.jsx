@@ -1,7 +1,5 @@
 import { useId } from 'react';
 
-// A label, a form control and its error message, linked for screen readers.
-// Use `as="select"` (with option children) for a dropdown.
 export default function Field({ label, error, as: Control = 'input', children, ...controlProps }) {
   const id = useId();
   const errorId = `${id}-error`;

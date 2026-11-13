@@ -10,7 +10,6 @@ export async function createUser({ name, email, passwordHash }) {
   return result.rows[0];
 }
 
-// Includes password_hash: only for checking a login, never send it to a client.
 export async function findUserByEmail(email) {
   const result = await query(
     'SELECT id, name, email, role, password_hash FROM users WHERE email = $1',

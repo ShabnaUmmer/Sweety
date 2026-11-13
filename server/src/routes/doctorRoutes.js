@@ -7,7 +7,6 @@ import {
 } from '../controllers/doctorController.js';
 import { requireAssignedPatient } from '../middleware/requireAssignedPatient.js';
 
-// Only GET routes exist: doctors have read-only access.
 const router = Router();
 router.get('/patients', listPatients);
 router.get('/patients/:patientId', requireAssignedPatient, getPatient);

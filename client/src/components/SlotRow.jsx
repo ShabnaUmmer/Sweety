@@ -1,4 +1,3 @@
-// One of the four daily slots: shows the recorded value, or an empty slot with an "Add" action.
 export default function SlotRow({ slot, reading, onAdd, onEdit, onDelete }) {
   if (!reading) {
     return (

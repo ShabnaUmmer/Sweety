@@ -19,11 +19,8 @@ router.get('/meta', getMeta);
 
 router.use('/auth', authRoutes);
 
-// Patients manage their own readings. Doctors cannot use these routes at all.
 router.use('/readings', requireAuth, requireRole(ROLE_PATIENT), readingRoutes);
 router.use('/reports', requireAuth, requireRole(ROLE_PATIENT), reportRoutes);
-
-// Doctors can only read data of patients assigned to them.
 router.use('/doctor', requireAuth, requireRole(ROLE_DOCTOR), doctorRoutes);
 
 export default router;

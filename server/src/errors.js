@@ -15,7 +15,6 @@ export function validationError(fields) {
   return new HttpError(400, 'Please fix the errors below.', { fields, code: 'VALIDATION_ERROR' });
 }
 
-// An error that belongs to one form field, so the client can show it next to that input.
 export function fieldError(status, field, message) {
   return new HttpError(status, message, { fields: { [field]: message } });
 }

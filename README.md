@@ -32,7 +32,7 @@ CREATE DATABASE sweety_test OWNER sweety_user;
 
 **3. Create `server/.env`.** Copy `server/.env.example` to `server/.env` and fill in `DATABASE_URL`, `TEST_DATABASE_URL` (a different database, used only by the tests) and `JWT_SECRET`. The example file explains every variable. Do not commit `.env`.
 
-**4. Create the tables and demo data**
+**4. Create the tables and sample data**
 
 ```bash
 npm run db:migrate
@@ -46,16 +46,16 @@ npm run dev --prefix server      # API on http://localhost:4000
 npm run dev --prefix client      # app on http://localhost:5173 (second terminal)
 ```
 
-## Demo accounts
+## Sample accounts
 
-All use the password `demo-pass-123`. The readings are made-up sample data.
+Created by `npm run db:seed`. The readings are made-up sample data. The seed also prints these logins.
 
-| Email | Role | Notes |
-|---|---|---|
-| `demo@sweety.test` | Patient | About 6 weeks of readings |
-| `patient2@sweety.test` | Patient | Assigned to the doctor |
-| `patient3@sweety.test` | Patient | Not assigned to the doctor |
-| `doctor@sweety.test` | Doctor | Assigned to the first two patients |
+| Email | Password | Role | Notes |
+|---|---|---|---|
+| `patient1@sweety.test` | `sweety-p1-4821` | Patient | About 6 weeks of readings, assigned to the doctor |
+| `patient2@sweety.test` | `sweety-p2-7305` | Patient | Assigned to the doctor |
+| `patient3@sweety.test` | `sweety-p3-1968` | Patient | Not assigned to the doctor |
+| `doctor@sweety.test` | `sweety-doc-5532` | Doctor | Sees patients 1 and 2 only |
 
 ## Tests
 

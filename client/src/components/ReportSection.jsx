@@ -1,7 +1,6 @@
 import { Link } from 'react-router-dom';
 import { formatRange } from '../dates.js';
 
-// Highest, lowest, average and count for one date range, or an empty state.
 export default function ReportSection({ title, report, addDate, children }) {
   return (
     <section className="report">

@@ -12,7 +12,6 @@ export async function findAssignedPatients(doctorId) {
   return result.rows;
 }
 
-// Returns the patient only if this doctor is assigned to them.
 export async function findAssignedPatient(doctorId, patientId) {
   const result = await query(
     `SELECT u.id, u.name, u.email

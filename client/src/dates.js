@@ -1,5 +1,4 @@
-// Dates arrive from the API as 'YYYY-MM-DD'. They are formatted in UTC so the
-// browser's time zone can never move them to a different day.
+// Dates arrive from the API as 'YYYY-MM-DD'. They are formatted in UTC so the browser's time zone can never move them to a different day.
 
 function toUtcDate(dateString) {
   const [year, month, day] = dateString.split('-').map(Number);

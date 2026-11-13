@@ -3,8 +3,6 @@ import { api } from '../api.js';
 import { useMeta } from '../meta.jsx';
 import Field from './Field.jsx';
 
-// Adds a new reading, or edits one when `reading.id` is set. The server does all validation;
-// this form only shows the messages it sends back, next to the matching input.
 export default function ReadingForm({ reading, onSaved, onCancel }) {
   const { slots, today } = useMeta();
   const isEditing = Boolean(reading.id);

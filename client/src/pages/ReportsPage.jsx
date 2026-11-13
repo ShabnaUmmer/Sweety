@@ -11,7 +11,7 @@ export default function ReportsPage({ patient }) {
 
   const [date, setDate] = useState(today);
   const [reports, setReports] = useState(null);
-  const [status, setStatus] = useState('loading'); // 'loading' | 'ready' | 'error'
+  const [status, setStatus] = useState('loading'); 
   const [errorMessage, setErrorMessage] = useState('');
   const [attempt, setAttempt] = useState(0);
 

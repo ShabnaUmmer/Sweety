@@ -1,6 +1,5 @@
-import { query } from '../db.js';
+import { query } from '../db.js'
 
-// Columns returned to the API. reading_date is renamed so the API says "date".
 const READING_COLUMNS = 'id, reading_date AS date, slot, value';
 
 export async function insertReading(userId, { date, slot, value }) {
@@ -30,7 +29,6 @@ export async function countReadingsOnDate(userId, date) {
   return result.rows[0].count;
 }
 
-// Every statement below filters on user_id, so one user can never touch another user's rows.
 export async function updateReading(userId, id, { date, slot, value }) {
   const result = await query(
     `UPDATE readings

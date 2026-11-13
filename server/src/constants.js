@@ -5,8 +5,6 @@ export const SLOTS = [
   { value: 'after_dinner', label: 'After dinner' },
 ];
 
-// Because every reading uses one of these slots and a slot can be used once per day,
-// the daily maximum is simply the number of slots. The database UNIQUE constraint enforces it.
 export const MAX_READINGS_PER_DAY = SLOTS.length;
 
 export const GLUCOSE_MIN = 40;
