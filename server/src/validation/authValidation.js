@@ -1,4 +1,4 @@
-import { PASSWORD_MAX_BYTES, PASSWORD_MIN_LENGTH } from '../constants.js';
+import { PASSWORD_MIN_LENGTH } from '../constants.js';
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const NAME_MAX_LENGTH = 100;
@@ -29,8 +29,6 @@ export function validateRegistration(body) {
     fields.password = 'Please enter a password.';
   } else if (password.length < PASSWORD_MIN_LENGTH) {
     fields.password = `Password must be at least ${PASSWORD_MIN_LENGTH} characters.`;
-  } else if (Buffer.byteLength(password) > PASSWORD_MAX_BYTES) {
-    fields.password = `Password is too long (maximum ${PASSWORD_MAX_BYTES} bytes).`;
   }
 
   return { fields, values: { name, email, password } };
