@@ -1,42 +1,28 @@
 # Sweety
 
-Sweety is a small web app for recording blood glucose readings. A user signs up, records up to four readings a day (mg/dl), and views daily, month-to-date and previous-month reports.
+Sweety is a small blood glucose tracker. A patient records up to 4 readings a day (mg/dl) and views daily, month-to-date and previous-month reports. A doctor can view the reports of patients assigned to them.
 
-Stack: React + Vite, Node.js + Express, PostgreSQL, bcrypt, JWT. Everything runs locally with Node.js, npm and a locally installed PostgreSQL.
+Built with React (Vite), Node.js + Express, PostgreSQL, bcrypt and JWT.
 
-Sweety is a tracking tool only. It does not classify readings, show "normal ranges" or give medical advice.
+## Features
 
-## Implemented features
-
-- Sign up and log in. Passwords are hashed with bcrypt (the `bcryptjs` package) and never returned by the API. Sessions use JWT. A logged-in user sees only their own data.
+- Sign up and log in. Passwords are hashed with bcrypt. Each patient sees only their own data.
 - Add, view, edit and delete readings in four slots: Morning (fasting), After breakfast, After lunch, After dinner.
-- Server-side validation with clear messages next to the field: value required, whole number between 40 and 600, one reading per slot per day, at most 4 per day, no future dates.
-- Daily, month-to-date and previous-month reports with highest, lowest, average (1 decimal) and count, plus an empty state. The daily report lists each reading with its slot.
-- Delete confirmation, loading and error states, and expired-session handling.
+- Validation with clear messages: value required, whole number 40 to 600, one reading per slot per day, max 4 per day, no future dates.
+- Reports (daily, month-to-date, previous month) with highest, lowest, average (1 decimal) and count, and an empty state.
+- Doctor role (bonus): a doctor sees a list of assigned patients and their reports, read-only.
 
-The optional doctor role is **not implemented**.
+## Setup
 
-## Project layout
+You need Node.js 20+ and PostgreSQL installed locally.
 
+**1. Install dependencies**
+
+```bash
+npm run install:all
 ```
-server/   Express API: routes -> controllers -> queries, with validation, dates and constants in their own modules
-client/   React app (Vite): pages, a few shared components, one API module
-```
 
-## Prerequisites
-
-- Node.js 20 or newer (with npm)
-- PostgreSQL 14 or newer, installed locally
-
-## Install PostgreSQL and create the databases
-
-Install PostgreSQL if you do not have it:
-
-- macOS (Homebrew): `brew install postgresql@16` then `brew services start postgresql@16`
-- Ubuntu/Debian: `sudo apt install postgresql` then `sudo service postgresql start`
-- Windows: use the installer from postgresql.org and remember the password you set for the `postgres` user.
-
-Open a PostgreSQL shell (`psql -U postgres`, or `sudo -u postgres psql` on Linux) and run:
+**2. Create the databases.** In `psql`:
 
 ```sql
 CREATE USER sweety_user WITH PASSWORD 'your_password';
@@ -44,113 +30,72 @@ CREATE DATABASE sweety OWNER sweety_user;
 CREATE DATABASE sweety_test OWNER sweety_user;
 ```
 
-`sweety` holds your data. `sweety_test` is used only by the tests, which empty its tables on every run, so never point it at a database you care about.
+**3. Create `server/.env`.** Copy `server/.env.example` to `server/.env` and fill in `DATABASE_URL`, `TEST_DATABASE_URL` (a different database, used only by the tests) and `JWT_SECRET`. The example file explains every variable. Do not commit `.env`.
 
-## Configure environment variables
-
-```bash
-cp server/.env.example server/.env
-```
-
-Edit `server/.env` and set `DATABASE_URL`, `TEST_DATABASE_URL` and `JWT_SECRET` (for example `openssl rand -hex 32`). The file lists every variable with comments. `APP_TIMEZONE` (default `Asia/Kolkata`) decides what "today" means. `.env` is ignored by Git; do not commit it.
-
-## Install, migrate and seed
+**4. Create the tables and demo data**
 
 ```bash
-npm run install:all     # installs server/ and client/ dependencies and creates package-lock.json files
-npm run db:migrate      # creates the tables (safe to run again)
-npm run db:seed         # optional: creates the demo account with sample readings
+npm run db:migrate
+npm run db:seed
 ```
 
-Commit the generated `package-lock.json` files (`server/` and `client/`) so installs are repeatable.
-
-### Demo account
-
-After `npm run db:seed`: `demo@sweety.test` / `demo-pass-123`. The seeded readings are made-up sample values for demonstration, covering the current and previous month. Re-running the seed replaces the demo account.
-
-## Run the backend
+## Run
 
 ```bash
-npm run dev --prefix server      # http://localhost:4000, restarts on file changes
-# or: npm start --prefix server
+npm run dev --prefix server      # API on http://localhost:4000
+npm run dev --prefix client      # app on http://localhost:5173 (second terminal)
 ```
 
-## Run the frontend
+## Demo accounts
 
-In a second terminal:
+All use the password `demo-pass-123`. The readings are made-up sample data.
 
-```bash
-npm run dev --prefix client      # http://localhost:5173
-```
+| Email | Role | Notes |
+|---|---|---|
+| `demo@sweety.test` | Patient | About 6 weeks of readings |
+| `patient2@sweety.test` | Patient | Assigned to the doctor |
+| `patient3@sweety.test` | Patient | Not assigned to the doctor |
+| `doctor@sweety.test` | Doctor | Assigned to the first two patients |
 
-Open http://localhost:5173. The Vite dev server forwards `/api` requests to the backend on port 4000.
-
-## Run the tests
+## Tests
 
 ```bash
 npm test
 ```
 
-This runs the server tests with Node's built-in test runner and `supertest` against `TEST_DATABASE_URL`. PostgreSQL must be running and the test database must exist; the tests create the tables themselves. They cover registration and login, wrong password, missing/invalid/expired tokens, access to another user's reading, valid and invalid readings (missing value, decimal, out of range, future date, duplicate slot, fifth reading on a day, two simultaneous duplicate requests), update and delete, and the daily, month-to-date and previous-month calculations, including empty results and month boundaries. Tests for date and validation logic need no database.
+Runs against `TEST_DATABASE_URL`, which must be a separate database whose name ends in `_test` (the tests refuse to run otherwise). They cover registration and login, wrong password, missing or expired tokens, validation rules, duplicate slots, a fifth reading in a day, edit and delete, one user accessing another user's reading, the three report calculations, an empty report, and the doctor rules (assigned and unassigned patients, read-only access).
 
-## Build the frontend
+## Build
 
 ```bash
 npm run build
 ```
 
-Creates `client/dist`. Sweety is run locally; this repository has no deployment setup.
+## How it works
 
-## API summary
+- **Time zone.** "Today" comes from `APP_TIMEZONE` (default `Asia/Kolkata`), not the server or database clock. Dates are stored as `DATE` and handled as `YYYY-MM-DD` strings.
+- **Duplicates.** A unique constraint on (user, date, slot) in PostgreSQL stops duplicate readings, even for simultaneous requests. With four slots it also limits a day to four readings.
+- **Ownership.** The user comes from the verified JWT, never from the request. Every reading query filters by `user_id`.
+- **Doctor access.** Patients and doctors have a `role`. A `doctor_patients` table lists which patients each doctor may view. Doctor routes only have GET endpoints and check that assignment on every request. Doctors get a 403 on the patient routes, so they cannot add, edit or delete readings.
 
-| Method | Path | Notes |
-|---|---|---|
-| POST | `/api/auth/register`, `/api/auth/login` | Return `{ token, user }` |
-| GET | `/api/auth/me` | Current user |
-| GET | `/api/meta` | Public: today (in `APP_TIMEZONE`), slots, limits |
-| GET | `/api/readings?date=YYYY-MM-DD` | Own readings for that date |
-| POST | `/api/readings` | Body `{ date, slot, value }` |
-| PUT / DELETE | `/api/readings/:id` | Own readings only; another user's ID returns 404 |
-| GET | `/api/reports/daily`, `/month-to-date`, `/monthly` (`?date=`) | `{ from, to, count, highest, lowest, average }`, plus `readings` for daily |
+## Notes
 
-Errors share one shape: `{ "error": { "message", "fields", "code" } }`. Stack traces and database details are never sent to the client.
+**Assumptions**
 
-## Design decisions
+- Anyone who registers is a patient. Doctor accounts and assignments are created by the seed script (there is no admin screen).
+- Reports for a future date are rejected. "Monthly" means the whole month before the selected date's month.
+- Passwords need at least 8 characters.
+- Sweety is a tracking tool. It does not classify readings or give medical advice.
 
-- **Time zone.** "Today" is computed in `APP_TIMEZONE` using `Intl`, never the server's or database's local time. Dates are stored as PostgreSQL `DATE` and passed as `'YYYY-MM-DD'` parameters; `CURRENT_DATE` is not used, and the `pg` driver returns dates as strings so they cannot shift a day. The client asks the API for "today" instead of using the browser clock.
-- **Duplicates and the daily limit.** A `UNIQUE (user_id, reading_date, slot)` constraint is the only guard, so simultaneous requests cannot both succeed. With exactly four slots it also caps a day at four readings. When it fires, the API says "You can add only 4 readings per day." if the day already has four readings, otherwise it names the duplicate slot. Each write is a single statement, so no transaction is needed.
-- **Ownership.** Identity comes only from the verified token. Every reading and report query filters on `user_id`, and all SQL is parameterised.
-- **Validation lives on the server.** The client shows the server's messages next to the matching field and gets slots, limits and "today" from `/api/meta`.
-- **Sessions.** JWT (HS256, 2 hours by default) sent in the `Authorization` header and kept in `sessionStorage`. An expired or invalid token returns the user to the login page with a message.
-- **Dependencies.** Server: `express`, `pg`, `bcryptjs` (a pure-JavaScript bcrypt, so no native build step), `jsonwebtoken`, `cors`, `dotenv`; tests use `supertest`. Client: `react`, `react-dom`, `react-router-dom`, Vite, and two `@fontsource` packages so Atkinson Hyperlegible and Source Serif 4 are bundled rather than loaded from a third party.
-- **Look.** Warm off-white, one deep teal, red only for errors and destructive actions. Glucose values are never colour-coded because the app defines no ranges.
+**Limitations**
 
-## Assumptions
+- No password reset, email verification or admin screen for assigning doctors.
+- No rate limiting or extra security headers.
+- The login token is kept in `sessionStorage`.
+- No frontend tests.
 
-- Editing may change a reading's date, slot and value; the same rules apply as when adding.
-- Reports for a future date are rejected. The monthly report is the calendar month before the selected date's month.
-- Passwords need 8+ characters; emails are stored lowercase.
-- "Future date" is enforced by the API, not the database, because it depends on `APP_TIMEZONE`.
+**With more time**
 
-## Known limitations
-
-- No rate limiting or extra security headers (kept out to keep the stack minimal); add them before exposing the app publicly.
-- The token is stored in `sessionStorage`, which scripts on the page can read; an httpOnly cookie would need CSRF protection.
-- No password reset, email verification or account deletion.
-- No frontend automated tests.
-- The doctor role is not implemented.
-- No screenshots are included; add your own to `docs/screenshots/`.
-
-## Possible future improvements
-
-- The optional doctor role with backend-enforced patient assignment, after everything above is verified.
+- An admin page to create doctors and assign patients.
 - Frontend tests and an end-to-end test.
-- Password reset, history view and CSV export.
-
-## First run checklist
-
-This version was prepared in an environment without network access or PostgreSQL, so only the date and validation unit tests, a server syntax check and a client import/JSX check were run. Before relying on it, run these on your machine, in order, and fix anything they report:
-
-1. `npm run install:all`
-2. `npm test`
-3. `npm run build`
+- Password reset, and a CSV export of readings.
